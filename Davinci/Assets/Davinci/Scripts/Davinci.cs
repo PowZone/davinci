@@ -30,8 +30,9 @@ public class Davinci : MonoBehaviour
     {
         none,
         uiImage,
+        rawImage,
         renderer,
-        sprite
+        sprite,
     }
 
     private RendererType rendererType = RendererType.none;
@@ -107,6 +108,21 @@ public class Davinci : MonoBehaviour
             Debug.Log("[Davinci] Target as UIImage set : " + image);
 
         rendererType = RendererType.uiImage;
+        this.targetObj = image.gameObject;
+        return this;
+    }
+
+    /// <summary>
+    /// Set target Image component.
+    /// </summary>
+    /// <param name="image">target Unity UI image component</param>
+    /// <returns></returns>
+    public Davinci into(RawImage image)
+    {
+        if (enableLog)
+            Debug.Log("[Davinci] Target as UIImage set : " + image);
+
+        rendererType = RendererType.rawImage;
         this.targetObj = image.gameObject;
         return this;
     }
@@ -420,6 +436,11 @@ public class Davinci : MonoBehaviour
 
                 break;
 
+            case RendererType.rawImage:
+                RawImage ri = targetObj.GetComponent<RawImage>();
+                ri.texture = loadingPlaceholder;
+                break;
+
             case RendererType.sprite:
                 SpriteRenderer spriteRenderer = targetObj.GetComponent<SpriteRenderer>();
                 Sprite spriteImage = Sprite.Create(loadingPlaceholder,
@@ -475,6 +496,37 @@ public class Davinci : MonoBehaviour
 
                             if (renderer != null)
                                 renderer.material.color = color;
+
+                            yield return null;
+                        }
+                    }
+
+                    break;
+
+                case RendererType.rawImage:
+                    RawImage ri = targetObj.GetComponent<RawImage>();
+
+                    if (ri == null)
+                        break;
+
+                    ri.texture = texture;
+                    float maxAlphaRI;
+
+                    if (fadeTime > 0)
+                    {
+                        color = ri.color;
+                        maxAlpha = color.a;
+
+                        color.a = 0;
+
+                        ri.color = color;
+                        float time = Time.time;
+                        while (color.a < maxAlpha)
+                        {
+                            color.a = Mathf.Lerp(0, maxAlpha, (Time.time - time) / fadeTime);
+
+                            if (ri != null)
+                                ri.color = color;
 
                             yield return null;
                         }
